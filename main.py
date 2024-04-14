@@ -16,7 +16,6 @@ session = requests.Session()
 def capture_requests(request, *args, **kwargs):
     print("Captured URL:", request.url)
     print("Request headers:", request.headers)
-    print("Request body:", request.body)
 
 # Register the hook function to the session
 session.hooks["response"] = [capture_requests]
