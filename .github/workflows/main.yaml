@@ -20,7 +20,4 @@ jobs:
     - name: Build and Run Splash
       run: |
         docker build -t splash .
-        docker run --rm splash > output.txt
-
-    - name: Output
-      run: cat output.txt
+        docker run --rm splash
