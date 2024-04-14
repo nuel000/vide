@@ -1,23 +1,30 @@
-name: Run Splash
+name: Web Scraping with Splash
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main  # Or specify your branch
 
 jobs:
-  splash:
+  scrape:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Build Docker image
+        run: docker build -t my_scraper .
 
-    - name: Build and Run Splash
-      run: |
-        docker build -t splash .
-        docker run --rm splash
+      - name: Run Splash container
+        run: docker run -d --name splash_container -p 8050:8050 my_scraper
+
+      - name: Perform scraping
+        run: |
+          sleep 5  # Wait for container to start (adjust if needed)
+          python scrape_script.py  # Replace with your script name
+        env:
+          SPLASH_URL: "http://localhost:8050/render.html"
+
+      - name: Cleanup
+        run: docker stop splash_container && docker rm splash_container
