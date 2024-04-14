@@ -1,15 +1,3 @@
-FROM scrapinghub/splash
+FROM scrapinghub/splash:3.5
 
-USER root
-
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    pip3 install requests && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY main.py /app/main.py
-WORKDIR /app
-
-ENV PYTHONUNBUFFERED=1
-
-CMD ["sh", "-c", "splash --no-sandbox & python3 main.py"]
+EXPOSE 8050
