@@ -12,4 +12,4 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python3", "main.py"]
+CMD ["python3", "main.py", "--no-sandbox"]
