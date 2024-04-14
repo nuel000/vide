@@ -15,6 +15,4 @@ def run():
 
     print(response_text)
     sys.stdout.flush()
-
-if __name__ == "__main__":
-    run()
+run()
