@@ -20,4 +20,4 @@ jobs:
       - name: Build and Run Splash
         run: |
           docker build -t splash .
-          docker run --rm -t -i splash
+          docker run --rm splash
