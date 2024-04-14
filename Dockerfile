@@ -6,4 +6,4 @@ RUN pip install requests
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "main.py"]
