@@ -22,7 +22,7 @@ jobs:
       - name: Perform scraping
         run: |
           sleep 5  # Wait for container to start (adjust if needed)
-          python scrape_script.py  # Replace with your script name
+          python main.py  # Replace with your script name
         env:
           SPLASH_URL: "http://localhost:8050/render.html"
 
