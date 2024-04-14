@@ -1,7 +1,7 @@
 import os
 import requests
 
-url = "https://web.facebook.com/ads/library/?id=357741606925594"
+url = "https://web.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=NG&id=357741606925594&media_type=all"
 splash_url = os.getenv("SPLASH_URL")
 
 params = {
