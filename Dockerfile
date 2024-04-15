@@ -13,9 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire content of your project to the working directory
 COPY . .
 
-# Install Playwright and download browsers
-RUN playwright install
-RUN playwright install-deps 
 
 # Command to run your Playwright script
 CMD ["python", "main.py"]
