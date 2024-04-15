@@ -1,30 +1,23 @@
-name: Web Scraping with Splash
+name: Run Playwright script manually
 
 on:
-  push:
-    branches:
-      - main  # Or specify your branch
+  workflow_dispatch:
 
 jobs:
-  scrape:
+  run-playwright:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
       - name: Build Docker image
-        run: docker build -t my_scraper .
+        run: docker build -t my-playwright-app .
 
-      - name: Run Splash container
-        run: docker run -d --name splash_container -p 8050:8050 my_scraper
-
-      - name: Perform scraping
-        run: |
-          sleep 10  # Wait for container to start (adjust if needed)
-          python main.py  # Replace with your script name
-        env:
-          SPLASH_URL: "http://localhost:8050/render.html"
-
-      - name: Cleanup
-        run: docker stop splash_container && docker rm splash_container
+      - name: Run Playwright script
+        run: docker run my-playwright-app
