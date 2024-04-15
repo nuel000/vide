@@ -7,7 +7,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=True)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://www.reddit.com/r/Chainlink/")
+    page.goto("https://twitter.com/chainlink")
     html = page.content()
     s = BeautifulSoup(html,'html.parser')
     print(s.text)
