@@ -1,24 +1,20 @@
-import os
-import requests
 
-url = "https://web.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=NG&id=357741606925594&media_type=all"
-splash_url = os.getenv("SPLASH_URL")
+from playwright.sync_api import Playwright, sync_playwright, expect
+from bs4 import BeautifulSoup
+import sys
 
-params = {
-    'url': url,
-    'wait': 5
-}
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=True)
+    context = browser.new_context()
+    page = context.new_page()
+    page.goto("https://www.reddit.com/r/Chainlink/")
+    html = page.content()
+    s = BeautifulSoup(html,'html.parser')
+    print(s.text)
+    sys.stdout.flush()
 
-# Define a custom session to capture requests
-session = requests.Session()
+    context.close()
+    browser.close()
 
-# Define a custom hook function to capture requests
-def capture_requests(request, *args, **kwargs):
-    print("Captured URL:", request.url)
-    print("Request headers:", request.headers)
-
-# Register the hook function to the session
-session.hooks["response"] = [capture_requests]
-
-r = session.get(splash_url, params=params)
-print(r.text)
+with sync_playwright() as playwright:
+    run(playwright)
