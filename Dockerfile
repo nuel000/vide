@@ -18,4 +18,4 @@ RUN playwright install
 RUN playwright install-deps 
 
 # Command to run your Playwright script
-CMD ["python", "calendarr.py"]
+CMD ["python", "main.py"]
