@@ -1,11 +1,53 @@
-from scrapingbee import ScrapingBeeClient
+from playwright.sync_api import sync_playwright
+import re
+import time
 import sys
 
-client = ScrapingBeeClient(api_key='NP63V99OC92MT0LQWVGA56GEH32NEZ183YIHJ6XNPBCDSMTCH06ZI38QYB1G5I47UUP44H4S141W0VA2')
+def intercept_requests(route, request):
+    # Check if the request is for a font file or an image/media file
+    if request.url.endswith(('.woff', '.woff2', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp','.ico')):
+        print(f"Aborting request for font, image or media: {request.url}")
+        route.abort()
+    else:
+        route.continue_()
 
-response = client.get("https://web.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=NG&id=1054028289359210&media_type=all")
+def get_user_interaction_count(url: str) -> str:
+    start_time = time.time()
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        context = browser.new_context()
+        page = context.new_page()
+        page.set_default_timeout(1000000)
 
-print('Response HTTP Status Code: ', response.status_code)
-sys.stdout.flush()
-print('Response HTTP Response Body: ', response.content)
+        # Intercept requests to remove requests for custom fonts, images or media
+        page.route("**/*", intercept_requests)
+
+        page.goto(url)
+        html = page.content()
+        print(html)
+        sys.stdout.flush()
+
+        pattern = r'"userInteractionCount":(\d+)'
+
+        # Search for the pattern in the content
+        match = re.search(pattern, html)
+        context.close()
+        browser.close()
+
+
+        # If a match is found, extract the userInteractionCount value
+        if match:
+            user_interaction_count = match.group(1)
+            execution_time = time.time() - start_time  # Calculate execution time
+            print(f"Execution time: {execution_time:.2f} seconds")
+            sys.stdout.flush()
+            return user_interaction_count
+        else:
+            return "Pattern not found in the content."
+        
+        
+
+url = "https://twitter.com/ton_blockchain"
+interaction_count = get_user_interaction_count(url)
+print("User Interaction Count:", interaction_count)
 sys.stdout.flush()
