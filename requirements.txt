@@ -1,7 +1,9 @@
 Automat==22.10.0
 beautifulsoup4==4.12.2
 pandas==2.0.3
-scrapingbee
+playwright==1.37.0
+playwright-recaptcha==0.4.1
+
 
 
 
