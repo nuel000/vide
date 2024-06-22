@@ -32,6 +32,8 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 def scrape_url(url, page):
     page.goto(url)
+    print(page.content)
+    sys.stdout.flush()
     s2 = BeautifulSoup(page.content(), 'html.parser')
     products = s2.find_all('div', class_='product-image')
     prod_links = [x.find('a').get('href') for x in products]
