@@ -12,6 +12,7 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import html
 from datetime import datetime
+import sys
 
 start_time = datetime.now()
 f_start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -108,6 +109,7 @@ def scrape_all_pages(start_url):
 
     while current_url:
         print(f"Scraping: {current_url}")
+        sys.stdout.flush()
         data, next_page_url = scrape_page(current_url)
         all_data.append(data)
 
@@ -139,3 +141,4 @@ worksheet1.clear()
 set_with_dataframe(worksheet=worksheet1, dataframe=df, include_index=False,
 include_column_header=True, resize=True)
 print('Google Sheet updated with Df for www.ballou976.com')
+sys.stdout.flush()
