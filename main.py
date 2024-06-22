@@ -128,12 +128,12 @@ df.to_csv('product_data_df.csv', index=False, encoding='utf-8-sig')
 scopes = ['https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/drive']
 
-credentials = Credentials.from_service_account_file('lambert_credentials.json', scopes=scopes)
+credentials = Credentials.from_service_account_file('test.json', scopes=scopes)
 gc = gspread.authorize(credentials)
 gauth = GoogleAuth()
 drive = GoogleDrive(gauth)
 
-gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
+gs = gc.open_by_key('1hP2BbxawYDBGpOke287_MI1XR7IIQZK0JU1M4huhQL4')
 # select a work sheet from its name
 worksheet1 = gs.worksheet('www.ballou976.com')
 worksheet1.clear()
