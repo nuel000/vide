@@ -143,7 +143,7 @@ SERVICE_ACCOUNT_FILE = json_credentials
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SAMPLE_SPREADSHEET_ID = "1E_vWDp1LOxkdm17nNR16Em3rjXwYA_5H8ssbANWXmIU"
 
-SAMPLE_RANGE_NAME = "Tabellenblatt2"
+SAMPLE_RANGE_NAME = "www.ballou976.com"
 creds = None
 creds = service_account.Credentials.from_service_account_info(json_credentials, scopes=SCOPES)
 
@@ -166,7 +166,7 @@ def update_google_sheet(sheet_id, range_name, df):
         body={'values': data}
     )
     response = request.execute()
-    print('Data updated successfully.')
+    print('Data updated successfully for www.ballou976.com')
     sys.stdout.flush()
 
 update_google_sheet(SAMPLE_SPREADSHEET_ID, SAMPLE_RANGE_NAME , df)
