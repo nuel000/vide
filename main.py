@@ -108,6 +108,8 @@ def run(playwright: Playwright) -> None:
     page = context.new_page()
     page.set_default_timeout(100000)
     page.goto("https://meubles110.yt/")
+    print(page.content())
+    sys.stdout.flush()
     s = BeautifulSoup(page.content(), 'html.parser')
     categories = s.find('div',class_='header-col header-center').find_all('li')
     cat_links = [x.find('a').get('href') for x in categories]
