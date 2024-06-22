@@ -22,6 +22,71 @@ f_start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'}
 
+r = requests.get('https://mhd.yt/collections/bibliotheque',headers = headers)
+s = BeautifulSoup(r.content,'html.parser')
+categories =  ['https://mhd.yt'+ x.find('a').get('href') for x in s.find('div',class_='sf-menu-submenu__content flex p-4').find_all('li')]
+
+
+def scrape_page(url):
+  products_list = []
+  r_m = requests.get(url,headers = headers)
+  s_m = BeautifulSoup(r_m.content, 'html.parser')
+  products = s_m.find('div',class_='sf__product-listing sf__col-4').find_all('div',class_='sf__col-item w-6/12 md:w-4/12 px-2 xl:px-3')
+  links = ['https://mhd.yt'+x.find('a',class_='block w-full').get('href') for x in products]
+  for i in links:
+    r_3 = requests.get(i,headers=headers)
+    s3 = BeautifulSoup(r_3.content, 'html.parser')
+    title = s3.find('h1').text
+    price = s3.find('span',class_='text-xl md:text-2xl prod__price text-color-regular-price').text
+    description = s3.find('div',class_='product__description prose').text
+
+    products_list.append({
+          'title': title,
+          'price': price,
+          'description': description
+          })
+    try:
+      next_page = s_m.find('link', rel='next')
+    except Exception as e:
+      print(e)
+      next_page = None
+    next_page_url = None
+    if next_page:
+        next_page_url = 'https://mhd.yt'+next_page.get('href')
+
+  return products_list, next_page_url
+
+def scrape_all_pages(start_url):
+    all_data = []
+    current_url = start_url
+    while current_url:
+        print(f"Scraping: {current_url}")
+        sys.stdout.flush()
+        data, next_page_url = scrape_page(current_url)
+        all_data.append(data)
+        if current_url == next_page_url:
+          break
+        if next_page_url:
+            current_url = next_page_url
+        else:
+            current_url = None
+    return all_data
+all_data = []
+for url in categories:
+  print(f'Scraping for {url} category')
+  sys.stdout.flush()
+  scraped_data = scrape_all_pages(url)
+  all_data.append(scraped_data)
+
+flattened_data = [item for sublist1 in all_data for sublist2 in sublist1 for item in sublist2]
+
+# Create a DataFrame
+df = pd.DataFrame(flattened_data)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------------------
+
 
 import requests
 from bs4 import BeautifulSoup
