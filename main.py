@@ -20,15 +20,6 @@ f_start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'}
 
-scopes = ['https://www.googleapis.com/auth/spreadsheets',
-          'https://www.googleapis.com/auth/drive']
-
-credentials = Credentials.from_service_account_file('lambert_credentials.json', scopes=scopes)
-gc = gspread.authorize(credentials)
-
-gauth = GoogleAuth()
-drive = GoogleDrive(gauth)
-
 
 import requests
 from bs4 import BeautifulSoup
@@ -134,6 +125,14 @@ df = pd.DataFrame(flattened_data, columns=columns)
 # Save the DataFrame to a CSV file
 df.to_csv('product_data_df.csv', index=False, encoding='utf-8-sig')
 # open a google sheet
+scopes = ['https://www.googleapis.com/auth/spreadsheets',
+          'https://www.googleapis.com/auth/drive']
+
+credentials = Credentials.from_service_account_file('lambert_credentials.json', scopes=scopes)
+gc = gspread.authorize(credentials)
+gauth = GoogleAuth()
+drive = GoogleDrive(gauth)
+
 gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
 # select a work sheet from its name
 worksheet1 = gs.worksheet('www.ballou976.com')
