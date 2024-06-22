@@ -122,22 +122,47 @@ columns = ['item_id', 'title', 'reference', 'category', 'current_price', 'old_pr
 # Create a DataFrame
 df = pd.DataFrame(flattened_data, columns=columns)
 
-# Save the DataFrame to a CSV file
-df.to_csv('product_data_df.csv', index=False, encoding='utf-8-sig')
-# open a google sheet
-scopes = ['https://www.googleapis.com/auth/spreadsheets',
-          'https://www.googleapis.com/auth/drive']
+json_credentials = {
+  "type": "service_account",
+  "project_id": "bright-coyote-426808-p6",
+  "private_key_id": "d9907f37cf916424119a237535a94ba1d05ff220",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDUVmWvcsc4kX4I\nFIw55J6pm631NZWI1nvbrVZhVSfatxkno7VAGNStf2atwtbXhFVDHFR1TxBpBMbR\nBzVQ2KKYKYb3gimwHKRL51J2nhQUj7zr26qEuYVRAaSFoSbVjaGgtxDNX5dKQ/vO\npZojoeNSaXCi6Mox92qy7+ztrYg2/B81ahvQ3481qR2paOSpubFjT/2ndegWIRs0\npsB0j1lZ5CWrgH5Uu8ouJuaMhU+bTZXFa9rqhDbR+ebBJ1rYknffNaAadhbacNTh\njHY6MJvysO3l4YghyNSpt6fetgtLt0KKEsYK5sOC1kA0UJPbxRy6yDFFkFhKBMvZ\nA8MXIWaZAgMBAAECggEAB8VATrhg6Vq3Ba1YKFzhIDct7uBOyvAryNvst6kkc+Y+\nycA9nM02fexAogaUUtS+mLMhCsihmBua+av4MS+MW7cr/5jIKnAR5Hk1qljvRoVa\nwOLhYvQLGJjPytgdPLQZ1cYn8OwY9EMipEBT22P27AgnHWnEJH9NF06dGWGVWjW0\nqr2C+lteys3XS7JD/AdkLjczYbj2eRM7+9G56b89t+Y1IHEYt9fVUMS61MA8TPs4\nXUWJ1+55IYKK7iJ5rxE5YQonAD7u7TjhVPMsShbrSu1RaTKNGfcfoiiR2HBVuUVr\nCCjK8qHZ8QOrVy/yZeKl2jjDGbxjMZP4vzZNA8RhRQKBgQD9lUCvGecbI1fdTdik\naBIomGmt+8IbyHMEDdKtNMn8kGDiJON/QcpkWeOCi9cevj4ochpcxmWU27G6RmVa\ntjoZt9aVzLig6GKrSrohqEXyqC7PrLIs3a9qaR8D8pZs+sBTwxFSqSQU26no5I7Z\nRUuiQWgxqWjDjtnd5qBmR5rf6wKBgQDWXIEyF60UF8zh1a+qt33iEeCN+t4CzvBV\nqRVJbEPxZBTR4mLyqbV2s30uHk/Keder5OxTZQUUUZ2gSsm0ihJMVeObpGKSAHNL\nKNMfhwG/Zx7rd2s95IrRDJeAV1fafSz7fTIBnzqiG4bRwjASavR4x7px1zOLIM2I\nPSMdrxr2iwKBgQD6Af2M5QfR3K2S1V4i8Sv99A4050J/q8ehlpNACwydQicSrnXQ\nkCefenPw0Dgd6khUDfLpxvx9n4AA+8iPf5uWoYYhmH3qvlIRORJ7fnDABYppW4Uq\n8MEyM0PN24ztEuctbeOVUIbvPYatwzEHCue/p6a3V6OfMiagPPGlBTGvUwKBgQCt\nnc6mG7b7ByvR3Zih1GwIpiIR3JXkAGd3ebLb/OwqnryeIZWypPFsaoOAztwhSf38\nIzWldbRfeJsKMIidyRZ47Tej38hWKDc5MJ+OcXJg68yHOfmJ74jfOCucryFgvPGp\n3wSZe7WphlHzoiv9PtMy39GKUppUnQTay2mdqS1VcQKBgQDsnbCl9KkcEzC7+k9G\ny69Y+d+tnXUlSHDU+WYEdsFx0AcrHcorwhYHRR4E4wHdHQwChfWaaOjnSP5Z/PDh\n8k9MWd4a9MAEb2y/4HqtcnKpu/SRh/oJ5tNd92KEZaZn35FlX9AKgUnmJHwe7Yn7\nhTOsqopNeLNmxL9yABh1Xb8D6g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "python-api@bright-coyote-426808-p6.iam.gserviceaccount.com",
+  "client_id": "109775724169581285261",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/python-api%40bright-coyote-426808-p6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
 
-credentials = Credentials.from_service_account_file('test.json', scopes=scopes)
-gc = gspread.authorize(credentials)
-gauth = GoogleAuth()
-drive = GoogleDrive(gauth)
+SERVICE_ACCOUNT_FILE = json_credentials
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SAMPLE_SPREADSHEET_ID = "1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc"
 
-gs = gc.open_by_key('1hP2BbxawYDBGpOke287_MI1XR7IIQZK0JU1M4huhQL4')
-# select a work sheet from its name
-worksheet1 = gs.worksheet('www.ballou976.com')
-worksheet1.clear()
-set_with_dataframe(worksheet=worksheet1, dataframe=df, include_index=False,
-include_column_header=True, resize=True)
+SAMPLE_RANGE_NAME = "www.ballou976.com"
+creds = None
+creds = service_account.Credentials.from_service_account_info(json_credentials, scopes=SCOPES)
+
+service = build("sheets", "v4", credentials=creds)
+
+def update_google_sheet(sheet_id, range_name, df):
+    # Authenticate with Google Sheets API using service account credentials
+    credentials = service_account.Credentials.from_service_account_info(json_credentials)
+    service = build('sheets', 'v4', credentials=credentials)
+
+    # Convert DataFrame to list of lists
+    data = [df.columns.tolist()] + df.values.tolist()
+
+    # Update values in Google Sheet
+    request = service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=range_name,
+        valueInputOption='RAW',
+        body={'values': data}
+    )
+    response = request.execute()
+    print('Data updated successfully.')
+update_google_sheet(SAMPLE_SPREADSHEET_ID, SAMPLE_RANGE_NAME ,df)
 print('Google Sheet updated with Df for www.ballou976.com')
 sys.stdout.flush()
