@@ -15,7 +15,6 @@ from pydrive.drive import GoogleDrive
 import html
 from datetime import datetime
 import sys
-from playwright.sync_api import Playwright, sync_playwright, expect
 import time
 from bs4 import BeautifulSoup
 import json
