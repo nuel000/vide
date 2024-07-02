@@ -30,14 +30,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 #------------------------------------------------------------------------------------------------------------------------------------------
 # SCRAPING www.ballou976.com
 
-scopes = ['https://www.googleapis.com/auth/spreadsheets',
-          'https://www.googleapis.com/auth/drive']
 
-credentials = Credentials.from_service_account_file('lambert_2.json', scopes=scopes)
-gc = gspread.authorize(credentials)
-
-gauth = GoogleAuth()
-drive = GoogleDrive(gauth)
 
 def scrape_page(url):
     response = requests.get(url,headers = headers)
@@ -137,6 +130,15 @@ columns = ['item_id', 'title', 'reference', 'category', 'current_price', 'old_pr
 # Create a DataFrame
 df = pd.DataFrame(flattened_data, columns=columns)
 
+
+scopes = ['https://www.googleapis.com/auth/spreadsheets',
+          'https://www.googleapis.com/auth/drive']
+
+credentials = Credentials.from_service_account_file('lambert_2.json', scopes=scopes)
+gc = gspread.authorize(credentials)
+
+gauth = GoogleAuth()
+drive = GoogleDrive(gauth)
 # open a google sheet
 gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
 # select a work sheet from its name
