@@ -20,8 +20,6 @@ import time
 from bs4 import BeautifulSoup
 import json
 import pandas as pd
-
-
 from datetime import datetime
 
 start_time = datetime.now()
@@ -30,226 +28,17 @@ f_start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'}
 
-def scrape_url(url, page):
-    page.goto(url)
-    print(page.content)
-    sys.stdout.flush()
-    s2 = BeautifulSoup(page.content(), 'html.parser')
-    products = s2.find_all('div', class_='product-image')
-    prod_links = [x.find('a').get('href') for x in products]
-    
-    all_product_dicts = []
-    
-    for i in prod_links:
-        page.goto(i)
-        s4 = BeautifulSoup(page.content(), 'html.parser')
-        script_tag = s4.find('script', {'type': 'application/ld+json', 'class': 'rank-math-schema'})
-
-        if script_tag:
-            try:
-                json_data = json.loads(script_tag.string)
-                product_info = next((item for item in json_data['@graph'] if item['@type'] == 'Product'), None)
-                
-                if product_info:
-                    product_dict = {
-                        "Product Name": product_info.get('name', ''),
-                        "Description": product_info.get('description', ''),
-                        "SKU": product_info.get('sku', ''),
-                        "Category": product_info.get('category', ''),
-                        "Height": f"{product_info.get('height', {}).get('value', '')} {product_info.get('height', {}).get('unitCode', '')}",
-                        "Width": f"{product_info.get('width', {}).get('value', '')} {product_info.get('width', {}).get('unitCode', '')}",
-                        "Depth": f"{product_info.get('depth', {}).get('value', '')} {product_info.get('depth', {}).get('unitCode', '')}",
-                        "Price": f"{product_info.get('offers', {}).get('price', '')} {product_info.get('offers', {}).get('priceCurrency', '')}"
-                    }
-                    all_product_dicts.append(product_dict)
-                else:
-                    print("No product information found in JSON-LD data.")
-            except json.JSONDecodeError:
-                print("Failed to parse JSON-LD data.")
-            except Exception as e:
-                print(f"An error occurred: {str(e)}")
-        else:
-            print("No JSON-LD script tag found.")
-    
-    try:
-        next_page = s2.find('a', class_='next page-numbers')
-        next_page_url = next_page.get('href') if next_page else None
-    except Exception as e:
-        print(f"Error finding next page: {str(e)}")
-        next_page_url = None
-
-    return all_product_dicts, next_page_url
-
-
-def scrape_all_pages(start_url,page):
-    all_data = []
-    current_url = start_url
-
-    while current_url:
-        print(f"Scraping: {current_url}")
-        sys.stdout.flush()
-        data, next_page_url = scrape_url(current_url,page)
-        all_data.append(data)
-        # if next_page_url == None:
-        #   break
-        if current_url == next_page_url:
-          break
-        if next_page_url:
-            current_url = next_page_url
-        else:
-            current_url = None
-
-    return all_data
-    
-    
-def run(playwright: Playwright) -> None:
-    browser = playwright.chromium.launch(headless=True)
-    context = browser.new_context()
-    page = context.new_page()
-    page.set_default_timeout(100000)
-    page.goto("https://meubles110.yt/")
-    print(page.content())
-    sys.stdout.flush()
-    s = BeautifulSoup(page.content(), 'html.parser')
-    categories = s.find('div',class_='header-col header-center').find_all('li')
-    cat_links = [x.find('a').get('href') for x in categories]
-    filtered_list = [url for url in cat_links  if len(url.split('https://meubles110.yt')[1].strip('/').split('/')) <= 2]
-    all_data = []
-    for  i in filtered_list:
-        all_data.append(scrape_all_pages(i,page))
-    
-    # ---------------------
-    context.close()
-    browser.close()
-    
-    return all_data
-
-with sync_playwright() as playwright:
-    data = run(playwright)
-
-flattened_data = [item for sublist1 in data for sublist2 in sublist1 for item in sublist2]
-df = pd.DataFrame(flattened_data)
-
-
-
 #------------------------------------------------------------------------------------------------------------------------------------------
+# SCRAPING www.ballou976.com
 
+scopes = ['https://www.googleapis.com/auth/spreadsheets',
+          'https://www.googleapis.com/auth/drive']
 
-r = requests.get('https://mhd.yt/collections/bibliotheque',headers = headers)
-s = BeautifulSoup(r.content,'html.parser')
-categories =  ['https://mhd.yt'+ x.find('a').get('href') for x in s.find('div',class_='sf-menu-submenu__content flex p-4').find_all('li')]
+credentials = Credentials.from_service_account_file('lambert_2.json', scopes=scopes)
+gc = gspread.authorize(credentials)
 
-
-def scrape_page(url):
-  products_list = []
-  r_m = requests.get(url,headers = headers)
-  s_m = BeautifulSoup(r_m.content, 'html.parser')
-  products = s_m.find('div',class_='sf__product-listing sf__col-4').find_all('div',class_='sf__col-item w-6/12 md:w-4/12 px-2 xl:px-3')
-  links = ['https://mhd.yt'+x.find('a',class_='block w-full').get('href') for x in products]
-  for i in links:
-    r_3 = requests.get(i,headers=headers)
-    s3 = BeautifulSoup(r_3.content, 'html.parser')
-    title = s3.find('h1').text
-    price = s3.find('span',class_='text-xl md:text-2xl prod__price text-color-regular-price').text
-    description = s3.find('div',class_='product__description prose').text
-
-    products_list.append({
-          'title': title,
-          'price': price,
-          'description': description
-          })
-    try:
-      next_page = s_m.find('link', rel='next')
-    except Exception as e:
-      print(e)
-      next_page = None
-    next_page_url = None
-    if next_page:
-        next_page_url = 'https://mhd.yt'+next_page.get('href')
-
-  return products_list, next_page_url
-
-def scrape_all_pages(start_url):
-    all_data = []
-    current_url = start_url
-    while current_url:
-        print(f"Scraping: {current_url}")
-        sys.stdout.flush()
-        data, next_page_url = scrape_page(current_url)
-        all_data.append(data)
-        if current_url == next_page_url:
-          break
-        if next_page_url:
-            current_url = next_page_url
-        else:
-            current_url = None
-    return all_data
-all_data = []
-for url in categories:
-  print(f'Scraping for {url} category')
-  sys.stdout.flush()
-  scraped_data = scrape_all_pages(url)
-  all_data.append(scraped_data)
-
-flattened_data = [item for sublist1 in all_data for sublist2 in sublist1 for item in sublist2]
-
-# Create a DataFrame
-df = pd.DataFrame(flattened_data)
-
-json_credentials = {
-  "type": "service_account",
-  "project_id": "calender-407115",
-  "private_key_id": "d19bdf8bbf41a641ffc0541d4c971d8af5cd5c13",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCuZDUV7SBF5TnA\nLjV4yuSB6g6upb/nkYcfVCBDPccKca2G7F4HMFiz55s3aHS5lSgKxEu6/EmIWUWP\nF1BRWhVTjtXxdMJup+2lTIf4t/bgOkqyvf+/GyX1r99Tuxr+Eg7Leq684nzhvWV6\nNyBLjU7bgdo55OsdOFwZ1Tfb6P+CPy3lYzTwchys0Ejk74/eRpxyRgi+HfgYs0VS\nLqw6olrtrAa+xYDJcvixP4WYl06vhOJ5L0KZnev/4ympxQSuqVGuXf1bobB4/PSM\nXcGC9fkSJePH3xew5FKHnFvvb6bQ5qn0cMv1MVOK0L+ABQvmyXo0U6gzRwKCL3z6\n3/kKPt+FAgMBAAECggEAGnQY7rqJqrtFh2F7EFe2p1OvO87ozWJwnM/7ajfKJEtv\nhzKpEMNvW9rw20wnvf8M6T/dklUIJ9Fi5nx4MomiXTUi6ahMgNH4ZUVhWtk3xHZo\niQnz7DQHY2gfoxPphEuOSE9+h33TyRUcekLieJN24tVPxSMfMc+FfmWu6NeZ6qfA\nCDH0ALHM3bGCrpWEuHN6iu2vQbwXv5tKFhoPeTe4hkpN6Wuk59qWgumVdo12D8K7\nzkLJryklapauEWurT1Cbi4yCTGXc0xAhg4vxC9kBmIsjKdMtjnPUKkFeUDc3WfKP\ntH4zcLNlBuglO7/3gDxIIwn2AdCeb6o0+6ZgtrqyAQKBgQDWBwXiTNvMRCvPdj3h\nAW9+uyowEJXIdrPflK6ZOHsuqz+7NiWTKoYFbv57+4oHsRYAOkql6soVorfMde12\nhO8YpS3guUROz2Fm/vgESKo7isIGt6L36hndrpHT2r3OhtxhNI4PDQHmKmVQl+fP\n8XuZOTt2K43Xb6BSrDvBeUMtTwKBgQDQl08jMFj8gfRlYOLnFiyZ6Sm64+aRh2m5\nEbg9XJyNi/bDD2IICYOEFBsNuuqeI2zwF2AmYkG6Y1AV2i78tne+5zHz4818w15R\ntxOhJbX4IfsMCv1x3QEMy01VFlZ09o60hDJ3B5jku9Ksm+T6lGH9Skj+FmKjX8u/\n2x8XgOU46wKBgGIwIqDpRcT2WWr6AfVh5TaswvP+B9lJq8ecvGUKpmiIo9pNQvu6\n/HUtsI5Mncxdj4xXMbvgdQlr9wpT57cB0XbrAJsiI5ZMSZEo07uTYpWiWNUgFiHK\nQkeTOM+KgJ1o/V2S8MEy5HYlaQmKRwz86gknWoIiBRaa3WBQJ7Hg4dK9AoGASg6u\nhivQLDZncubnKGxzAWIK8tOfNOQC4TYtV3veCVM8FR0NDRVzoB0TTdijG+ov7z4d\nYQNZmrdP47JHJGoUMa8byR+EAVvLzO9XBMvCw4os+6WbPiXdDZHQrvjzUSuIlwao\ndCI6Yltc/POMZHryH1+UcsG325FTYZaGf22/9GkCgYEAy1Gyl1IGdxtBWVIO40gV\nNwQ2Dpj11+cBssFsts8GoTPcpEY2+wVYZ2X7OPlgu+lqACY+ahzn/TTrU8cQ7qKL\nnn4d5ejTPVWpt65EprvUtM9ktfNGlbhMWfD2NFfJuADvO0viHUhPHRhwYoEAEWlK\n+DiZMK30YbupxN5rje8hdbU=\n-----END PRIVATE KEY-----\n",
-  "client_email": "calender-try@calender-407115.iam.gserviceaccount.com",
-  "client_id": "112124438999230222753",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/calender-try%40calender-407115.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-
-
-SERVICE_ACCOUNT_FILE = json_credentials
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SAMPLE_SPREADSHEET_ID = "1E_vWDp1LOxkdm17nNR16Em3rjXwYA_5H8ssbANWXmIU"
-
-SAMPLE_RANGE_NAME = "www.mhd.yt"
-creds = None
-creds = service_account.Credentials.from_service_account_info(json_credentials, scopes=SCOPES)
-
-service = build("sheets", "v4", credentials=creds)
-
-
-def update_google_sheet(sheet_id, range_name, df):
-    # Authenticate with Google Sheets API using service account credentials
-    credentials = service_account.Credentials.from_service_account_info(json_credentials)
-    service = build('sheets', 'v4', credentials=credentials)
-
-    # Convert DataFrame to list of lists
-    data = [df.columns.tolist()] + df.values.tolist()
-
-    # Update values in Google Sheet
-    request = service.spreadsheets().values().update(
-        spreadsheetId=sheet_id,
-        range=range_name,
-        valueInputOption='RAW',
-        body={'values': data}
-    )
-    response = request.execute()
-    print('Data updated successfully for www.mhd.yt')
-    sys.stdout.flush()
-
-update_google_sheet(SAMPLE_SPREADSHEET_ID, SAMPLE_RANGE_NAME , df)
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------------------
-
-
-import requests
-from bs4 import BeautifulSoup
+gauth = GoogleAuth()
+drive = GoogleDrive(gauth)
 
 def scrape_page(url):
     response = requests.get(url,headers = headers)
@@ -349,55 +138,18 @@ columns = ['item_id', 'title', 'reference', 'category', 'current_price', 'old_pr
 # Create a DataFrame
 df = pd.DataFrame(flattened_data, columns=columns)
 
-json_credentials = {
-  "type": "service_account",
-  "project_id": "calender-407115",
-  "private_key_id": "d19bdf8bbf41a641ffc0541d4c971d8af5cd5c13",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCuZDUV7SBF5TnA\nLjV4yuSB6g6upb/nkYcfVCBDPccKca2G7F4HMFiz55s3aHS5lSgKxEu6/EmIWUWP\nF1BRWhVTjtXxdMJup+2lTIf4t/bgOkqyvf+/GyX1r99Tuxr+Eg7Leq684nzhvWV6\nNyBLjU7bgdo55OsdOFwZ1Tfb6P+CPy3lYzTwchys0Ejk74/eRpxyRgi+HfgYs0VS\nLqw6olrtrAa+xYDJcvixP4WYl06vhOJ5L0KZnev/4ympxQSuqVGuXf1bobB4/PSM\nXcGC9fkSJePH3xew5FKHnFvvb6bQ5qn0cMv1MVOK0L+ABQvmyXo0U6gzRwKCL3z6\n3/kKPt+FAgMBAAECggEAGnQY7rqJqrtFh2F7EFe2p1OvO87ozWJwnM/7ajfKJEtv\nhzKpEMNvW9rw20wnvf8M6T/dklUIJ9Fi5nx4MomiXTUi6ahMgNH4ZUVhWtk3xHZo\niQnz7DQHY2gfoxPphEuOSE9+h33TyRUcekLieJN24tVPxSMfMc+FfmWu6NeZ6qfA\nCDH0ALHM3bGCrpWEuHN6iu2vQbwXv5tKFhoPeTe4hkpN6Wuk59qWgumVdo12D8K7\nzkLJryklapauEWurT1Cbi4yCTGXc0xAhg4vxC9kBmIsjKdMtjnPUKkFeUDc3WfKP\ntH4zcLNlBuglO7/3gDxIIwn2AdCeb6o0+6ZgtrqyAQKBgQDWBwXiTNvMRCvPdj3h\nAW9+uyowEJXIdrPflK6ZOHsuqz+7NiWTKoYFbv57+4oHsRYAOkql6soVorfMde12\nhO8YpS3guUROz2Fm/vgESKo7isIGt6L36hndrpHT2r3OhtxhNI4PDQHmKmVQl+fP\n8XuZOTt2K43Xb6BSrDvBeUMtTwKBgQDQl08jMFj8gfRlYOLnFiyZ6Sm64+aRh2m5\nEbg9XJyNi/bDD2IICYOEFBsNuuqeI2zwF2AmYkG6Y1AV2i78tne+5zHz4818w15R\ntxOhJbX4IfsMCv1x3QEMy01VFlZ09o60hDJ3B5jku9Ksm+T6lGH9Skj+FmKjX8u/\n2x8XgOU46wKBgGIwIqDpRcT2WWr6AfVh5TaswvP+B9lJq8ecvGUKpmiIo9pNQvu6\n/HUtsI5Mncxdj4xXMbvgdQlr9wpT57cB0XbrAJsiI5ZMSZEo07uTYpWiWNUgFiHK\nQkeTOM+KgJ1o/V2S8MEy5HYlaQmKRwz86gknWoIiBRaa3WBQJ7Hg4dK9AoGASg6u\nhivQLDZncubnKGxzAWIK8tOfNOQC4TYtV3veCVM8FR0NDRVzoB0TTdijG+ov7z4d\nYQNZmrdP47JHJGoUMa8byR+EAVvLzO9XBMvCw4os+6WbPiXdDZHQrvjzUSuIlwao\ndCI6Yltc/POMZHryH1+UcsG325FTYZaGf22/9GkCgYEAy1Gyl1IGdxtBWVIO40gV\nNwQ2Dpj11+cBssFsts8GoTPcpEY2+wVYZ2X7OPlgu+lqACY+ahzn/TTrU8cQ7qKL\nnn4d5ejTPVWpt65EprvUtM9ktfNGlbhMWfD2NFfJuADvO0viHUhPHRhwYoEAEWlK\n+DiZMK30YbupxN5rje8hdbU=\n-----END PRIVATE KEY-----\n",
-  "client_email": "calender-try@calender-407115.iam.gserviceaccount.com",
-  "client_id": "112124438999230222753",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/calender-try%40calender-407115.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
+# open a google sheet
+gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
+# select a work sheet from its name
+worksheet1 = gs.worksheet('www.ballou976.com')
+worksheet1.clear()
+set_with_dataframe(worksheet=worksheet1, dataframe=df, include_index=False,
+include_column_header=True, resize=True)
+print('Google Sheet updated with Df for www.ballou976.com')
+sys.stdout.flush()
 
-
-SERVICE_ACCOUNT_FILE = json_credentials
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SAMPLE_SPREADSHEET_ID = "1E_vWDp1LOxkdm17nNR16Em3rjXwYA_5H8ssbANWXmIU"
-
-SAMPLE_RANGE_NAME = "www.ballou976.com"
-creds = None
-creds = service_account.Credentials.from_service_account_info(json_credentials, scopes=SCOPES)
-
-service = build("sheets", "v4", credentials=creds)
-
-
-def update_google_sheet(sheet_id, range_name, df):
-    # Authenticate with Google Sheets API using service account credentials
-    credentials = service_account.Credentials.from_service_account_info(json_credentials)
-    service = build('sheets', 'v4', credentials=credentials)
-
-    # Convert DataFrame to list of lists
-    data = [df.columns.tolist()] + df.values.tolist()
-
-    # Update values in Google Sheet
-    request = service.spreadsheets().values().update(
-        spreadsheetId=sheet_id,
-        range=range_name,
-        valueInputOption='RAW',
-        body={'values': data}
-    )
-    response = request.execute()
-    print('Data updated successfully for www.ballou976.com')
-    sys.stdout.flush()
-
-update_google_sheet(SAMPLE_SPREADSHEET_ID, SAMPLE_RANGE_NAME , df)
-
-
-#------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------
+# SCRAPING www.kalo.yt
 
 r_first = requests.get('https://kalo.yt/fr/10-gros-electromenager',headers = headers)
 s_first = BeautifulSoup(r_first.content,'html.parser')
@@ -490,9 +242,6 @@ def scrape_all_pages(start_url):
 
 
     return all_data
-
-# start_url = "https://kalo.yt/fr/10-gros-electromenager"  # Starting URL
-# all_scraped_data = scrape_all_pages(start_url)
 all_data = []
 for url in categories_urls:
   print(f'Scraping for {url} category')
@@ -504,51 +253,14 @@ flattened_data = [item for sublist1 in all_data for sublist2 in sublist1 for ite
 
 # Create a DataFrame
 df = pd.DataFrame(flattened_data)
+gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
+# select a work sheet from its name
+worksheet1 = gs.worksheet('www.kalo.yt')
+worksheet1.clear()
+set_with_dataframe(worksheet=worksheet1, dataframe=df, include_index=False,
+include_column_header=True, resize=True)
+print('Google Sheet updated with Df for www.kalo.yt')
+sys.stdout.flush()
 
-json_credentials = {
-  "type": "service_account",
-  "project_id": "calender-407115",
-  "private_key_id": "d19bdf8bbf41a641ffc0541d4c971d8af5cd5c13",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCuZDUV7SBF5TnA\nLjV4yuSB6g6upb/nkYcfVCBDPccKca2G7F4HMFiz55s3aHS5lSgKxEu6/EmIWUWP\nF1BRWhVTjtXxdMJup+2lTIf4t/bgOkqyvf+/GyX1r99Tuxr+Eg7Leq684nzhvWV6\nNyBLjU7bgdo55OsdOFwZ1Tfb6P+CPy3lYzTwchys0Ejk74/eRpxyRgi+HfgYs0VS\nLqw6olrtrAa+xYDJcvixP4WYl06vhOJ5L0KZnev/4ympxQSuqVGuXf1bobB4/PSM\nXcGC9fkSJePH3xew5FKHnFvvb6bQ5qn0cMv1MVOK0L+ABQvmyXo0U6gzRwKCL3z6\n3/kKPt+FAgMBAAECggEAGnQY7rqJqrtFh2F7EFe2p1OvO87ozWJwnM/7ajfKJEtv\nhzKpEMNvW9rw20wnvf8M6T/dklUIJ9Fi5nx4MomiXTUi6ahMgNH4ZUVhWtk3xHZo\niQnz7DQHY2gfoxPphEuOSE9+h33TyRUcekLieJN24tVPxSMfMc+FfmWu6NeZ6qfA\nCDH0ALHM3bGCrpWEuHN6iu2vQbwXv5tKFhoPeTe4hkpN6Wuk59qWgumVdo12D8K7\nzkLJryklapauEWurT1Cbi4yCTGXc0xAhg4vxC9kBmIsjKdMtjnPUKkFeUDc3WfKP\ntH4zcLNlBuglO7/3gDxIIwn2AdCeb6o0+6ZgtrqyAQKBgQDWBwXiTNvMRCvPdj3h\nAW9+uyowEJXIdrPflK6ZOHsuqz+7NiWTKoYFbv57+4oHsRYAOkql6soVorfMde12\nhO8YpS3guUROz2Fm/vgESKo7isIGt6L36hndrpHT2r3OhtxhNI4PDQHmKmVQl+fP\n8XuZOTt2K43Xb6BSrDvBeUMtTwKBgQDQl08jMFj8gfRlYOLnFiyZ6Sm64+aRh2m5\nEbg9XJyNi/bDD2IICYOEFBsNuuqeI2zwF2AmYkG6Y1AV2i78tne+5zHz4818w15R\ntxOhJbX4IfsMCv1x3QEMy01VFlZ09o60hDJ3B5jku9Ksm+T6lGH9Skj+FmKjX8u/\n2x8XgOU46wKBgGIwIqDpRcT2WWr6AfVh5TaswvP+B9lJq8ecvGUKpmiIo9pNQvu6\n/HUtsI5Mncxdj4xXMbvgdQlr9wpT57cB0XbrAJsiI5ZMSZEo07uTYpWiWNUgFiHK\nQkeTOM+KgJ1o/V2S8MEy5HYlaQmKRwz86gknWoIiBRaa3WBQJ7Hg4dK9AoGASg6u\nhivQLDZncubnKGxzAWIK8tOfNOQC4TYtV3veCVM8FR0NDRVzoB0TTdijG+ov7z4d\nYQNZmrdP47JHJGoUMa8byR+EAVvLzO9XBMvCw4os+6WbPiXdDZHQrvjzUSuIlwao\ndCI6Yltc/POMZHryH1+UcsG325FTYZaGf22/9GkCgYEAy1Gyl1IGdxtBWVIO40gV\nNwQ2Dpj11+cBssFsts8GoTPcpEY2+wVYZ2X7OPlgu+lqACY+ahzn/TTrU8cQ7qKL\nnn4d5ejTPVWpt65EprvUtM9ktfNGlbhMWfD2NFfJuADvO0viHUhPHRhwYoEAEWlK\n+DiZMK30YbupxN5rje8hdbU=\n-----END PRIVATE KEY-----\n",
-  "client_email": "calender-try@calender-407115.iam.gserviceaccount.com",
-  "client_id": "112124438999230222753",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/calender-try%40calender-407115.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-
-
-SERVICE_ACCOUNT_FILE = json_credentials
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SAMPLE_SPREADSHEET_ID = "1E_vWDp1LOxkdm17nNR16Em3rjXwYA_5H8ssbANWXmIU"
-
-SAMPLE_RANGE_NAME = "www.kalo.yt"
-creds = None
-creds = service_account.Credentials.from_service_account_info(json_credentials, scopes=SCOPES)
-
-service = build("sheets", "v4", credentials=creds)
-
-
-def update_google_sheet(sheet_id, range_name, df):
-    # Authenticate with Google Sheets API using service account credentials
-    credentials = service_account.Credentials.from_service_account_info(json_credentials)
-    service = build('sheets', 'v4', credentials=credentials)
-
-    # Convert DataFrame to list of lists
-    data = [df.columns.tolist()] + df.values.tolist()
-
-    # Update values in Google Sheet
-    request = service.spreadsheets().values().update(
-        spreadsheetId=sheet_id,
-        range=range_name,
-        valueInputOption='RAW',
-        body={'values': data}
-    )
-    response = request.execute()
-    print('Data updated successfully for www.kalo.yt')
-    sys.stdout.flush()
-
-update_google_sheet(SAMPLE_SPREADSHEET_ID, SAMPLE_RANGE_NAME , df)
+#------------------------------------------------------------------------------------------------------------
 
