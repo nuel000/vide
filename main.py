@@ -134,13 +134,13 @@ df = pd.DataFrame(flattened_data, columns=columns)
 scopes = ['https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/drive']
 
-credentials = Credentials.from_service_account_file('lambert_2.json', scopes=scopes)
+credentials = Credentials.from_service_account_file('test.json', scopes=scopes)
 gc = gspread.authorize(credentials)
 
 gauth = GoogleAuth()
 drive = GoogleDrive(gauth)
 # open a google sheet
-gs = gc.open_by_key('1Fl00gau4qbcNZMZUQXCkpfXneJSe3ox1wtqL-Shq3Dc')
+gs = gc.open_by_key('1E_vWDp1LOxkdm17nNR16Em3rjXwYA_5H8ssbANWXmIU')
 # select a work sheet from its name
 worksheet1 = gs.worksheet('www.ballou976.com')
 worksheet1.clear()
