@@ -20,4 +20,4 @@ COPY . .
 ENV GOOGLE_APPLICATION_CREDENTIALS=""
 
 # Command to run your Playwright script
-CMD ["python", "main.py"]
+CMD ["python", "test.py"]
