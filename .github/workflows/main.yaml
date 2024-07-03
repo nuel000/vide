@@ -1,23 +1,22 @@
 name: Run Playwright script manually
-
 on:
   workflow_dispatch:
-
 jobs:
   run-playwright:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-
       - name: Build Docker image
         run: docker build -t my-playwright-app .
-
       - name: Run Playwright script
-        run: docker run my-playwright-app
+        env:
+          GOOGLE_CREDS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: |
+          docker run \
+            -e GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDS" \
+            my-playwright-app
