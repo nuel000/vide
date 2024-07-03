@@ -145,3 +145,117 @@ set_with_dataframe(worksheet=worksheet1, dataframe=df, include_index=False,
 include_column_header=True, resize=True)
 print('Google Sheet updated with Df for www.ballou976.com')
 sys.stdout.flush()
+#---------------------------------------------------------------------------------------------------------
+
+r_first = requests.get('https://kalo.yt/fr/10-gros-electromenager',headers = headers)
+s_first = BeautifulSoup(r_first.content,'html.parser')
+categories = s_first.find('div',class_='sidebar col-xs-12 col-sm-12 col-md-4 col-lg-3')
+lis = categories.find('ul',class_='category-sub-menu').find_all('li')
+all_links = [x.find('a') for x in lis]
+sub_links = [x.find('a',class_='category-sub-link') for x in lis]
+categories_urls = [x.get('href') for x in all_links if x not in sub_links]
+
+def scrape_page(url):
+  products_list = []
+  r_k = requests.get(url,headers = headers)
+  s_k = BeautifulSoup(r_k.content, 'html.parser')
+  products = s_k.find_all('article',class_='product-miniature js-product-miniature')
+  links = [x.find('a').get('href') for x in products]
+
+  for link in links:
+    r2 = requests.get(link, headers=headers)
+    s2 = BeautifulSoup(r2.content, 'html.parser')
+    div = s2.find('div', class_='tab-pane fade')
+    # Extract the value of the data-product attribute
+    try:
+      data_product = div['data-product']
+    except:
+      data_product = s2.find('div',class_='col-form_id-form_2557388242095048 col-md-12 col-lg-12 col-xl-12 col-sm-12 col-xs-12 col-sp-12').find('div')['data-product']
+    # Convert the JSON string to a Python dictionary
+    product_details = json.loads(data_product)
+    manufacturer_id = product_details['id_manufacturer']
+    default_shop_id = product_details['id_shop_default']
+    reference = product_details['reference']
+    supplier_id = product_details['id_supplier']
+    price = product_details['price'].split(',')[0].replace('\n', ' ').replace('\r', ' ').strip()
+    title = product_details['name']
+    description_html = product_details['description']
+    description_soup = BeautifulSoup(description_html, 'html.parser')
+    description = description_soup.get_text()
+    description = html.unescape(description)
+
+    short_description_html = product_details['description_short']
+    short_description_soup = BeautifulSoup(short_description_html, 'html.parser')
+    short_description = short_description_soup.get_text()
+    short_description = html.unescape(short_description)
+
+    category = product_details['category']
+    price_tax = product_details['price_tax_exc']
+    price_without_reduction = product_details['price_without_reduction']
+
+
+    products_list.append({
+          'manufacturer_id': manufacturer_id,
+          'default_shop_id': default_shop_id,
+          'reference': reference,
+          'supplier_id': supplier_id,
+          'price': price,
+          'title': title,
+          'description': description,
+          'short_description': short_description,
+          'category': category,
+          'price_tax': price_tax,
+          'price_without_reduction': price_without_reduction
+      })
+  try:
+    next_page = s_k.find('ul',class_='page-list clearfix text-md-right text-xs-center').find_all('li')[-1]
+  except Exception as e:
+    print(e)
+    next_page = None
+  next_page_url = None
+  if next_page:
+      next_page_url = next_page.find('a').get('href')
+
+  return products_list, next_page_url
+
+def scrape_all_pages(start_url):
+    all_data = []
+    current_url = start_url
+
+    while current_url:
+        print(f"Scraping: {current_url}")
+        data, next_page_url = scrape_page(current_url)
+        all_data.append(data)
+        # if next_page_url == None:
+        #   break
+        if current_url == next_page_url:
+          break
+        if next_page_url:
+            current_url = next_page_url
+        else:
+            current_url = None
+
+
+    return all_data
+
+# start_url = "https://kalo.yt/fr/10-gros-electromenager"  # Starting URL
+# all_scraped_data = scrape_all_pages(start_url)
+all_data = []
+for url in categories_urls:
+  print(f'Scraping for {url} category')
+  scraped_data = scrape_all_pages(url)
+  all_data.append(scraped_data)
+
+flattened_data = [item for sublist1 in all_data for sublist2 in sublist1 for item in sublist2]
+
+# Create a DataFrame
+df = pd.DataFrame(flattened_data)
+gs = gc.open_by_key('10ublPdt4Q3Q2glrqR__VZF2Cf4lq5h6B73WPX3AjkGI')
+# select a work sheet from its name
+worksheet2 = gs.worksheet('Sheet2')
+worksheet2.clear()
+set_with_dataframe(worksheet=worksheet2, dataframe=df, include_index=False,
+include_column_header=True, resize=True)
+print('Google Sheet updated with Df for www.kalo.yt')
+sys.stdout.flush()
+
