@@ -115,6 +115,7 @@ def scrape_all_pages(start_url):
 
     while current_url:
         print(f"Scraping: {current_url}")
+        sys.stdout.flush()
         data, next_page_url = scrape_page(current_url)
         all_data.append(data)
 
