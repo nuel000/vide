@@ -224,6 +224,7 @@ def scrape_all_pages(start_url):
 
     while current_url:
         print(f"Scraping: {current_url}")
+        sys.stdout.flush()
         data, next_page_url = scrape_page(current_url)
         all_data.append(data)
         # if next_page_url == None:
@@ -243,6 +244,7 @@ def scrape_all_pages(start_url):
 all_data = []
 for url in categories_urls:
   print(f'Scraping for {url} category')
+  sys.stdout.flush()
   scraped_data = scrape_all_pages(url)
   all_data.append(scraped_data)
 
