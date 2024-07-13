@@ -17,7 +17,6 @@ COPY . .
 RUN playwright install
 RUN playwright install-deps 
 
-ENV GOOGLE_APPLICATION_CREDENTIALS=""
 
 # Command to run your Playwright script
 CMD ["python", "test.py"]
