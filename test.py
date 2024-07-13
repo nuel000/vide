@@ -13,9 +13,14 @@ def run(playwright: Playwright) -> None:
     page.get_by_test_id("domain-select-modal-close-button").click()
     print('Clicked on close button')
     sys.stdout.flush()
-    page.get_by_role("button", name="Accept all").click()
-    print('Clicked on accept button')
-    sys.stdout.flush()
+    try:
+        page.get_by_role("button", name="Accept all").click()
+        print('Clicked on accept button')
+        sys.stdout.flush()
+    except:
+        pass
+        print("passsed")
+        sys.stdout.flush()
     time.sleep(5)
     
     s = BeautifulSoup(page.content(),'html.parser')
