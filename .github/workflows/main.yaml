@@ -14,9 +14,4 @@ jobs:
       - name: Build Docker image
         run: docker build -t my-playwright-app .
       - name: Run Playwright script
-        env:
-          GOOGLE_CREDS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: |
-          docker run \
-            -e GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDS" \
-            my-playwright-app
+        run: docker run my-playwright-app
