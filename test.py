@@ -24,3 +24,9 @@ def run(playwright: Playwright) -> None:
     for i in links:
         print(i.get('href'))
         sys.stdout.flush()
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)
